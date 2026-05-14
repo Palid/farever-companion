@@ -23,6 +23,11 @@ export function Analytics() {
             ad_personalization: 'denied',
             analytics_storage: 'denied',
           });
+          try {
+            if (localStorage.getItem('farever-consent-v1') === 'granted') {
+              gtag('consent', 'update', { analytics_storage: 'granted' });
+            }
+          } catch (e) {}
           gtag('js', new Date());
           gtag('config', '${GA_MEASUREMENT_ID}');
         `}

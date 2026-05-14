@@ -1,5 +1,6 @@
 import { SITE_DOMAIN, OWNER, CONTACT_EMAIL } from "@/lib/site";
 import { RELEASE_CONFIG, formatReleaseDate } from "@/lib/release";
+import { CookiePreferencesLink } from "@/app/_components/CookiePreferencesLink";
 
 export function SiteFooter() {
   return (
@@ -37,6 +38,8 @@ export function SiteFooter() {
           >
             {CONTACT_EMAIL}
           </a>
+          <span className="mx-2 text-border-strong">&middot;</span>
+          <CookiePreferencesLink />
         </p>
       </div>
     </footer>

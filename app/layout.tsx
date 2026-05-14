@@ -5,6 +5,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { OfficialSourceRibbon } from "@/app/_components/OfficialSourceRibbon";
 import { NavBar } from "@/app/_components/NavBar";
 import { Analytics } from "@/app/_components/Analytics";
+import { ConsentBanner } from "@/app/_components/ConsentBanner";
 import { KofiFloatingButton } from "@/app/_components/KofiFloatingButton";
 import { SiteFooter } from "@/app/_components/SiteFooter";
 
@@ -69,6 +70,7 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <SiteFooter />
         <Analytics />
+        <ConsentBanner />
         <KofiFloatingButton />
       </body>
     </html>
