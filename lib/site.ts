@@ -7,3 +7,5 @@ export const CONTACT_EMAIL = "contact@farevercompanion.com";
 export const GITHUB_OWNER = "Palid";
 export const GITHUB_REPO = "farever-companion";
 export const GITHUB_REPO_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}`;
+
+export const GA_MEASUREMENT_ID = "G-8ZELD03DXY";

@@ -4,6 +4,7 @@ import "./globals.css";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { OfficialSourceRibbon } from "@/app/_components/OfficialSourceRibbon";
 import { NavBar } from "@/app/_components/NavBar";
+import { Analytics } from "@/app/_components/Analytics";
 import { KofiFloatingButton } from "@/app/_components/KofiFloatingButton";
 import { SiteFooter } from "@/app/_components/SiteFooter";
 
@@ -67,6 +68,7 @@ export default function RootLayout({
         <NavBar />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        <Analytics />
         <KofiFloatingButton />
       </body>
     </html>
