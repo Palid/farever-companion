@@ -7,6 +7,7 @@ import { MultiClassScreenshot } from "@/app/_components/MultiClassScreenshot";
 import { MoreToolsTease } from "@/app/_components/MoreToolsTease";
 import { DownloadSection } from "@/app/_components/DownloadSection";
 import { FaqSection } from "@/app/_components/FaqSection";
+import { SupportSection } from "@/app/_components/SupportSection";
 
 export default function Page() {
   return (
@@ -20,6 +21,7 @@ export default function Page() {
       <MoreToolsTease />
       <DownloadSection />
       <FaqSection />
+      <SupportSection />
     </>
   );
 }
