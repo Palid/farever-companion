@@ -1,3 +1,5 @@
+import { SITE_DOMAIN } from "@/lib/site";
+
 export const socialImageSize = { width: 1200, height: 630 };
 
 export function SocialImageContent() {
@@ -47,7 +49,7 @@ export function SocialImageContent() {
           textTransform: "uppercase",
         }}
       >
-        farevercompanion.com
+        {SITE_DOMAIN}
       </div>
     </div>
   );

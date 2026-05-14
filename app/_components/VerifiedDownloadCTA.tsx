@@ -53,7 +53,7 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
         <a
           href={downloadPath}
           download={fileName}
-          className="w-full bg-accent text-accent-foreground font-semibold rounded-lg px-6 py-3 inline-flex items-center justify-center gap-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="w-full bg-accent text-accent-foreground font-semibold rounded-lg px-6 py-3 inline-flex items-center justify-center gap-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Icon name="download" className="w-5 h-5" />
           Download Farever Companion v{latestVersion}

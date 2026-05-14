@@ -125,7 +125,7 @@ export function NavBar() {
           <a
             href="#download"
             onClick={() => setOpen(false)}
-            className="mt-2 inline-flex items-center gap-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg px-4 py-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+            className="mt-2 inline-flex items-center gap-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg px-4 py-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Icon name="download" className="w-3.5 h-3.5" />
             Download
