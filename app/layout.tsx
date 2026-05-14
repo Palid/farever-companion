@@ -5,6 +5,7 @@ import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { OfficialSourceRibbon } from "@/app/_components/OfficialSourceRibbon";
 import { NavBar } from "@/app/_components/NavBar";
 import { KofiFloatingButton } from "@/app/_components/KofiFloatingButton";
+import { SiteFooter } from "@/app/_components/SiteFooter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
         <OfficialSourceRibbon />
         <NavBar />
         <main className="flex-1">{children}</main>
+        <SiteFooter />
         <KofiFloatingButton />
       </body>
     </html>
