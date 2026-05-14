@@ -5,6 +5,7 @@ import { EncounterLoggingCard } from "@/app/_components/EncounterLoggingCard";
 import { ClassStrip } from "@/app/_components/ClassStrip";
 import { MultiClassScreenshot } from "@/app/_components/MultiClassScreenshot";
 import { MoreToolsTease } from "@/app/_components/MoreToolsTease";
+import { DownloadSection } from "@/app/_components/DownloadSection";
 
 export default function Page() {
   return (
@@ -16,6 +17,7 @@ export default function Page() {
       <ClassStrip />
       <MultiClassScreenshot />
       <MoreToolsTease />
+      <DownloadSection />
     </>
   );
 }
