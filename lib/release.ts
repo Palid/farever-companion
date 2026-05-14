@@ -1,0 +1,40 @@
+export type Release = {
+  latestVersion: string;
+  fileName: string;
+  downloadPath: string;
+  sha256: string;
+  releasedAt: string;
+  fileSizeBytes?: number;
+  changelogUrl?: string;
+};
+
+export const RELEASE_CONFIG: Release = {
+  latestVersion: "0.0.0",
+  fileName: "FareverCompanion.zip",
+  downloadPath: "/downloads/FareverCompanion.zip",
+  sha256: "0000000000000000000000000000000000000000000000000000000000000000",
+  releasedAt: "2026-05-14",
+};
+
+export const PLACEHOLDER_SHA256 = "0".repeat(64);
+
+export function isPlaceholderRelease(release: Release = RELEASE_CONFIG): boolean {
+  return release.sha256 === PLACEHOLDER_SHA256;
+}
+
+export function formatReleaseDate(iso: string): string {
+  // Render as e.g. "May 14, 2026". Force UTC so the date matches the ISO string regardless of server TZ.
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export function formatFileSize(bytes: number | undefined): string | null {
+  if (bytes === undefined) return null;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
