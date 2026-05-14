@@ -1,7 +1,9 @@
+import { GITHUB_REPO_URL } from "@/lib/site";
+
 export type Release = {
   latestVersion: string;
+  tag: string;
   fileName: string;
-  downloadPath: string;
   sha256: string;
   releasedAt: string;
   fileSizeBytes?: number;
@@ -10,11 +12,15 @@ export type Release = {
 
 export const RELEASE_CONFIG: Release = {
   latestVersion: "0.0.0",
+  tag: "v0.0.0",
   fileName: "FareverCompanion.zip",
-  downloadPath: "/downloads/FareverCompanion.zip",
   sha256: "0000000000000000000000000000000000000000000000000000000000000000",
   releasedAt: "2026-05-14",
 };
+
+export function releaseDownloadUrl(release: Release = RELEASE_CONFIG): string {
+  return `${GITHUB_REPO_URL}/releases/download/${release.tag}/${release.fileName}`;
+}
 
 export const PLACEHOLDER_SHA256 = "0".repeat(64);
 

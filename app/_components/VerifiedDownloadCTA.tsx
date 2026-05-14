@@ -4,6 +4,7 @@ import {
   isPlaceholderRelease,
   formatReleaseDate,
   formatFileSize,
+  releaseDownloadUrl,
 } from "@/lib/release";
 import { Icon } from "@/app/_components/Icon";
 import { CopyButton } from "@/app/_components/CopyButton";
@@ -15,7 +16,7 @@ interface VerifiedDownloadCTAProps {
 
 export function VerifiedDownloadCTA({ variant = "section", className }: VerifiedDownloadCTAProps) {
   const isPlaceholder = isPlaceholderRelease();
-  const { latestVersion, downloadPath, fileName, sha256, releasedAt, fileSizeBytes } = RELEASE_CONFIG;
+  const { latestVersion, fileName, sha256, releasedAt, fileSizeBytes } = RELEASE_CONFIG;
 
   const fileSizeFormatted = formatFileSize(fileSizeBytes);
 
@@ -51,8 +52,9 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
         </button>
       ) : (
         <a
-          href={downloadPath}
+          href={releaseDownloadUrl(RELEASE_CONFIG)}
           download={fileName}
+          rel="noopener"
           className="w-full bg-accent text-accent-foreground font-semibold rounded-lg px-6 py-3 inline-flex items-center justify-center gap-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Icon name="download" className="w-5 h-5" />
