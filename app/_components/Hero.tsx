@@ -49,12 +49,11 @@ export function Hero() {
         {/* Right column */}
         <div>
           <Screenshot
-            src={undefined}
-            alt="Farever Companion overlay during combat"
-            width={800}
-            height={500}
-            caption="Hero overlay — screenshot pending"
-            className="rounded-lg w-full"
+            src="/screenshots/dps-meter.webp"
+            alt="Farever Companion DPS meter showing real-time damage breakdown"
+            width={677}
+            height={300}
+            className="rounded-lg w-full h-auto"
           />
         </div>
       </div>

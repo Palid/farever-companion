@@ -20,10 +20,7 @@ export function FeatureGrid() {
               "Per-skill breakdown for the active fight.",
               "Encounter start/end markers.",
             ]}
-            screenshotSrc="/screenshots/dps-meter.webp"
-            screenshotAlt="Farever Companion DPS meter showing damage breakdown per ability"
-            screenshotWidth={677}
-            screenshotHeight={300}
+            screenshotAlt="Damage meter close-up"
           />
           <FeatureCard
             icon="drop"
