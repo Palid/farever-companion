@@ -10,7 +10,13 @@ export type AnalyticsEventName =
   | "jump_link_click";
 
 export type AnalyticsEventParams = {
-  download_click: { variant: string; version: string; file_name: string };
+  download_click: {
+    variant: string;
+    version: string;
+    file_name: string;
+    referrer: string;
+    page_location: string;
+  };
   faq_open: { question: string };
   jump_link_click: {
     target: string;
@@ -22,8 +28,6 @@ export type AnalyticsEventParams = {
   };
 };
 
-const CONSENT_KEY = "farever-consent-v1";
-
 export function trackEvent<N extends AnalyticsEventName>(
   name: N,
   params?: AnalyticsEventParams[N]
@@ -31,13 +35,8 @@ export function trackEvent<N extends AnalyticsEventName>(
   try {
     if (typeof window === "undefined") return;
     if (typeof window.gtag !== "function") return;
-    // Belt-and-suspenders: also check explicit user consent in localStorage.
-    // GA Consent Mode already buffers/drops when denied, but we guard here too.
-    try {
-      if (localStorage.getItem(CONSENT_KEY) !== "granted") return;
-    } catch {
-      // localStorage unavailable — fall through and let Consent Mode decide.
-    }
+    // Consent is enforced upstream by Google Consent Mode v2; events sent under
+    // denied state become cookieless modeled pings — no cookies, no client_id.
     window.gtag("event", name, params ?? {});
   } catch {
     // Analytics must never break the page.

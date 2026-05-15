@@ -64,6 +64,8 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
               variant,
               version: latestVersion,
               file_name: fileName,
+              referrer: typeof document !== "undefined" ? document.referrer : "",
+              page_location: typeof window !== "undefined" ? window.location.href : "",
             })
           }
         >
