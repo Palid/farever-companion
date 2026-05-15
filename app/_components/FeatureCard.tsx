@@ -29,13 +29,15 @@ export function FeatureCard({ icon, title, tagline, bullets, screenshotSrc, scre
           </li>
         ))}
       </ul>
-      <Screenshot
-        src={screenshotSrc}
-        alt={screenshotAlt}
-        width={screenshotWidth}
-        height={screenshotHeight}
-        className="w-full h-auto rounded-md mt-auto"
-      />
+      {screenshotSrc ? (
+        <Screenshot
+          src={screenshotSrc}
+          alt={screenshotAlt}
+          width={screenshotWidth}
+          height={screenshotHeight}
+          className="w-full h-auto rounded-md mt-auto"
+        />
+      ) : null}
     </article>
   );
 }
