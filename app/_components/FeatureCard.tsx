@@ -8,9 +8,11 @@ interface FeatureCardProps {
   bullets: string[];
   screenshotSrc?: string;
   screenshotAlt: string;
+  screenshotWidth?: number;
+  screenshotHeight?: number;
 }
 
-export function FeatureCard({ icon, title, tagline, bullets, screenshotSrc, screenshotAlt }: FeatureCardProps) {
+export function FeatureCard({ icon, title, tagline, bullets, screenshotSrc, screenshotAlt, screenshotWidth = 600, screenshotHeight = 600 }: FeatureCardProps) {
   return (
     <article className="rounded-xl border border-border bg-surface p-6 flex flex-col gap-4 h-full">
       <div className="w-10 h-10 rounded-lg bg-surface-elevated border border-border-strong flex items-center justify-center">
@@ -30,9 +32,9 @@ export function FeatureCard({ icon, title, tagline, bullets, screenshotSrc, scre
       <Screenshot
         src={screenshotSrc}
         alt={screenshotAlt}
-        width={600}
-        height={600}
-        className="rounded-md mt-auto"
+        width={screenshotWidth}
+        height={screenshotHeight}
+        className="w-full h-auto rounded-md mt-auto"
       />
     </article>
   );
