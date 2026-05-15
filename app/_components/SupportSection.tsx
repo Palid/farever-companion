@@ -22,12 +22,15 @@ export function SupportSection() {
           </p>
         </div>
 
-        {/* TODO(kofi): paste Ko-fi tip-panel iframe here. Expected shape:
-           <iframe id="kofiframe" src="https://ko-fi.com/USERNAME/?hidefeed=true&widget=true&embed=true&preview=true"
-                   style={{ border: 'none', width: '100%', padding: 4, background: '#0b0b0d' }}
-                   height="712" title="USERNAME on Ko-fi" /> */}
-        <div className="mt-8 min-h-[680px] rounded-xl border border-dashed border-border-strong bg-surface flex items-center justify-center text-sm text-subtle font-mono">
-          Ko-fi panel will load here
+        <div className="mt-8 rounded-xl border border-border-strong bg-background overflow-hidden">
+          <iframe
+            id="kofiframe"
+            src="https://ko-fi.com/phoelid/?hidefeed=true&widget=true&embed=true&preview=true"
+            style={{ border: "none", width: "100%", padding: 4, background: "#0b0b0d", display: "block" }}
+            height={712}
+            title="phoelid on Ko-fi"
+            loading="lazy"
+          />
         </div>
       </div>
     </section>
