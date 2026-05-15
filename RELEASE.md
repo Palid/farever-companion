@@ -11,7 +11,8 @@ The site automatically redeploys on Vercel when `main` is pushed, so the CTA fli
 ## One-shot release flow
 
 ```bash
-# 0. Build the release artifact wherever you build it (FareverCompanion-0.1.0.zip).
+# 0. Build the release artifact and drop it in ./releases/ (gitignored).
+#    Example: ./releases/FareverCompanion-0.1.0.zip
 
 # 1. Compute the SHA-256 (macOS / Linux):
 shasum -a 256 FareverCompanion-0.1.0.zip

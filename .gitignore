@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 TODO.local.md
+
+# release artifacts — built binaries dropped here for cutting GH releases
+/releases/*
+!/releases/README.md
