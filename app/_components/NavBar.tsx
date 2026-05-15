@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { SITE_DOMAIN } from "@/lib/site";
 import { Icon } from "@/app/_components/Icon";
+import { trackEvent } from "@/lib/analytics";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -54,6 +55,7 @@ export function NavBar() {
         <Link
           href="#top"
           className="flex flex-col leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
+          onClick={() => trackEvent("jump_link_click", { target: "#top", location: "navbar_wordmark" })}
         >
           <span className="font-semibold tracking-tight text-foreground">Farever Companion</span>
           <span className="font-mono text-[10px] text-subtle">· {SITE_DOMAIN}</span>
@@ -65,6 +67,7 @@ export function NavBar() {
             <a
               key={link.href}
               href={link.href}
+              onClick={() => trackEvent("jump_link_click", { target: link.href, location: "navbar_desktop" })}
               className={`text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded ${
                 activeSection === link.href.slice(1)
                   ? "text-accent"
@@ -79,6 +82,7 @@ export function NavBar() {
         {/* Desktop CTA pill */}
         <a
           href="#download"
+          onClick={() => trackEvent("jump_link_click", { target: "#download", location: "navbar_desktop" })}
           className="hidden md:inline-flex ml-4 items-center gap-1 bg-accent text-accent-foreground text-sm font-semibold rounded-full px-4 py-1.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Icon name="download" className="w-3.5 h-3.5" />
@@ -112,7 +116,10 @@ export function NavBar() {
             <a
               key={link.href}
               href={link.href}
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                trackEvent("jump_link_click", { target: link.href, location: "navbar_mobile" });
+              }}
               className={`py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-2 ${
                 activeSection === link.href.slice(1)
                   ? "text-accent"
@@ -124,7 +131,10 @@ export function NavBar() {
           ))}
           <a
             href="#download"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              trackEvent("jump_link_click", { target: "#download", location: "navbar_mobile" });
+            }}
             className="mt-2 inline-flex items-center gap-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg px-4 py-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Icon name="download" className="w-3.5 h-3.5" />

@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { SITE_DOMAIN, CONTACT_EMAIL } from "@/lib/site";
 import { Icon } from "@/app/_components/Icon";
+import { trackEvent } from "@/lib/analytics";
 
 type FaqItem = {
   q: string;
@@ -82,7 +85,15 @@ export function FaqSection() {
           {items.map((item, i) => {
             const num = String(i + 1).padStart(2, "0");
             return (
-              <details key={item.q} className="group">
+              <details
+                key={item.q}
+                className="group"
+                onToggle={(e) => {
+                  if (e.currentTarget.open) {
+                    trackEvent("faq_open", { question: item.q });
+                  }
+                }}
+              >
                 <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start gap-4 py-5 text-left text-foreground hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:text-accent">
                   <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-subtle pt-1 w-8 shrink-0">
                     {num}

@@ -1,6 +1,9 @@
+"use client";
+
 import { SITE_DOMAIN } from "@/lib/site";
 import { VerifiedDownloadCTA } from "@/app/_components/VerifiedDownloadCTA";
 import { Screenshot } from "@/app/_components/Screenshot";
+import { trackEvent } from "@/lib/analytics";
 
 export function Hero() {
   return (
@@ -36,6 +39,7 @@ export function Hero() {
           </p>
           <a
             href="#disclaimer"
+            onClick={() => trackEvent("jump_link_click", { target: "#disclaimer", location: "hero_body" })}
             className="mt-6 inline-flex items-center gap-1 text-sm text-muted hover:text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
           >
             What it does (and doesn&apos;t) →
