@@ -6,7 +6,7 @@ The marketing site (the Next.js app in this repo) is the canonical source for do
 2. Committing + tagging + pushing
 3. Attaching the built binary to a matching GitHub Release
 
-The site automatically redeploys on Vercel when `main` is pushed, so the CTA flips to the new version as soon as steps 2 + 3 are done.
+The site automatically redeploys to GitHub Pages when `main` is pushed (see `.github/workflows/deploy.yml`), so the CTA flips to the new version as soon as steps 2 + 3 are done.
 
 ## One-shot release flow
 
@@ -44,7 +44,7 @@ gh release create v0.1.0 ./FareverCompanion-0.1.0.zip \
   --notes "What changed in this release."
 ```
 
-After step 5, Vercel will redeploy the site (triggered by the push in step 4), and the download CTA on farevercompanion.com will point at the new versioned URL.
+After step 5, GitHub Pages will redeploy the site (triggered by the push in step 4 via `.github/workflows/deploy.yml`), and the download CTA on farevercompanion.com will point at the new versioned URL.
 
 ## Verification contract — why we use versioned URLs
 

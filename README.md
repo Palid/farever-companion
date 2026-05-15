@@ -38,8 +38,9 @@ then follow the flow in [`RELEASE.md`](./RELEASE.md), which covers computing
 the SHA-256, bumping `lib/release.ts`, tagging, and attaching the asset to the
 GitHub Release via `gh release create`.
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The site is statically exported (`output: "export"` in `next.config.ts`) and
+deployed to GitHub Pages on every push to `main` via
+[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml). The custom
+domain is configured through `public/CNAME` (farevercompanion.com).
