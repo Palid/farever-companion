@@ -11,12 +11,12 @@ export type Release = {
 };
 
 export const RELEASE_CONFIG: Release = {
-  latestVersion: "0.1.0",
-  tag: "v0.1.0",
-  fileName: "dinput8.dll",
-  sha256: "f5c236c5b8bad6f0e6fe3cfb62a119db749cfc369ca9f7286f2a73b1adaaa864",
-  releasedAt: "2026-05-15",
-  fileSizeBytes: 2720768,
+  latestVersion: "0.1.1",
+  tag: "v0.1.1",
+  fileName: "farever-companion-v0.1.1.zip",
+  sha256: "06bdb8c0debd76ff207a9d6d7a490b5cb4e735d33c45eed209946eeecae4591f",
+  releasedAt: "2026-05-16",
+  fileSizeBytes: 1387299,
 };
 
 export function releaseDownloadUrl(release: Release = RELEASE_CONFIG): string {

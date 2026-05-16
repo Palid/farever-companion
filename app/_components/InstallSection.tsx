@@ -2,19 +2,19 @@ import { Icon } from "@/app/_components/Icon";
 
 const steps: { label: string; detail: string }[] = [
   {
-    label: "Download the file",
+    label: "Download the zip",
     detail:
-      "Grab the latest build from the Download section above. Right now the download is a single DLL; a zip bundle (with a README.txt inside) is on the way — either way, steps 2 and 3 cover both.",
+      "Grab the latest build from the Download section above. The release is a .zip archive containing dinput8.dll, a README.txt, and the font license files.",
   },
   {
-    label: "Unpack if you have a zip",
+    label: "Unzip the archive",
     detail:
-      "If the download is a .zip, extract it. You’ll get dinput8.dll and a README.txt. If you downloaded the bare DLL, skip ahead.",
+      "Extract the zip. You’ll get dinput8.dll and a README.txt (plus the bundled font licenses).",
   },
   {
     label: "Read the README.txt",
     detail:
-      "Included in the zip, it carries the most up-to-date install notes for that exact build — any patch-specific caveats will live there first.",
+      "It carries the most up-to-date install notes for that exact build — any patch-specific caveats will live there first.",
   },
   {
     label: "Drop dinput8.dll into the Farever game folder",
