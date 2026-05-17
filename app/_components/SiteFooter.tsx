@@ -1,8 +1,9 @@
 import { SITE_DOMAIN, OWNER, CONTACT_EMAIL } from "@/lib/site";
-import { RELEASE_CONFIG, formatReleaseDate } from "@/lib/release";
+import { RELEASE_CONFIG, formatReleaseDate, isPlaceholderRelease, releaseNotesUrl } from "@/lib/release";
 import { CookiePreferencesLink } from "@/app/_components/CookiePreferencesLink";
 
 export function SiteFooter() {
+  const isPlaceholder = isPlaceholderRelease();
   return (
     <footer className="mt-auto border-t border-border bg-surface px-4 py-12">
       <div className="max-w-6xl mx-auto">
@@ -23,6 +24,19 @@ export function SiteFooter() {
           v{RELEASE_CONFIG.latestVersion}&nbsp;&nbsp;·&nbsp;&nbsp;Released{" "}
           {formatReleaseDate(RELEASE_CONFIG.releasedAt)}&nbsp;&nbsp;·&nbsp;&nbsp;SHA-256{" "}
           {RELEASE_CONFIG.sha256.slice(0, 12)}&hellip;
+          {!isPlaceholder && (
+            <>
+              &nbsp;&nbsp;·&nbsp;&nbsp;
+              <a
+                href={releaseNotesUrl(RELEASE_CONFIG)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted hover:text-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                Changelog
+              </a>
+            </>
+          )}
         </p>
 
         <p className="mt-2 text-xs text-subtle">

@@ -4,47 +4,52 @@ The marketing site (the Next.js app in this repo) is the canonical source for do
 
 1. Bumping `lib/release.ts` to point at the new version + hash
 2. Committing + tagging + pushing
-3. Attaching the built binary to a matching GitHub Release
+3. Attaching the built binary to a matching GitHub Release, using `releases/CHANGELOG-<version>.md` as the release body
 
-The site automatically redeploys to GitHub Pages when `main` is pushed (see `.github/workflows/deploy.yml`), so the CTA flips to the new version as soon as steps 2 + 3 are done.
+The site automatically redeploys to GitHub Pages when `main` is pushed (see `.github/workflows/deploy.yml`), so the CTA flips to the new version as soon as steps 2 + 3 are done. The "what's changed" / "Changelog" links on the site point at `https://github.com/Palid/farever-companion/releases/tag/<tag>`, so the release body on GitHub *is* the changelog users see.
 
 ## One-shot release flow
 
 ```bash
 # 0. Build the release artifact and drop it in ./releases/ (gitignored).
-#    Example: ./releases/FareverCompanion-0.1.0.zip
+#    Example: ./releases/farever-companion-v0.1.0.zip
 
 # 1. Compute the SHA-256 (macOS / Linux):
-shasum -a 256 FareverCompanion-0.1.0.zip
+shasum -a 256 farever-companion-v0.1.0.zip
 # Windows (PowerShell):
-#   Get-FileHash .\FareverCompanion-0.1.0.zip -Algorithm SHA256
+#   Get-FileHash .\farever-companion-v0.1.0.zip -Algorithm SHA256
 
 # 2. Note the file size in bytes:
-wc -c FareverCompanion-0.1.0.zip
+wc -c farever-companion-v0.1.0.zip
 
-# 3. Edit lib/release.ts — set latestVersion, tag, fileName, sha256, releasedAt,
+# 3. Write ./releases/CHANGELOG-0.1.0.md describing what changed in this
+#    version. This file is the release body on GitHub — what users see when
+#    they click "what's changed" / "Changelog" on the site.
+
+# 4. Edit lib/release.ts — set latestVersion, tag, fileName, sha256, releasedAt,
 #    and fileSizeBytes. Example:
 #
 #      latestVersion: "0.1.0",
 #      tag: "v0.1.0",
-#      fileName: "FareverCompanion-0.1.0.zip",
+#      fileName: "farever-companion-v0.1.0.zip",
 #      sha256: "<lowercase 64-char hex from step 1>",
 #      releasedAt: "2026-05-14",
 #      fileSizeBytes: <bytes from step 2>,
 
-# 4. Commit + tag + push:
+# 5. Commit + tag + push:
 git -c commit.gpgsign=false commit -am "release: v0.1.0"
 git tag v0.1.0
 git push
 git push --tags
 
-# 5. Create the GitHub Release with the asset attached:
-gh release create v0.1.0 ./FareverCompanion-0.1.0.zip \
+# 6. Create the GitHub Release with the asset attached, using the changelog
+#    file as the release body (so the site's "Changelog" link renders it):
+gh release create v0.1.0 ./releases/farever-companion-v0.1.0.zip \
   --title "v0.1.0" \
-  --notes "What changed in this release."
+  --notes-file ./releases/CHANGELOG-0.1.0.md
 ```
 
-After step 5, GitHub Pages will redeploy the site (triggered by the push in step 4 via `.github/workflows/deploy.yml`), and the download CTA on farevercompanion.com will point at the new versioned URL.
+After step 6, GitHub Pages will redeploy the site (triggered by the push in step 5 via `.github/workflows/deploy.yml`), and the download CTA on farevercompanion.com will point at the new versioned URL. The "what's changed" link next to the version (and the "Changelog" link in the footer) will resolve to the GitHub release page for the new tag, with the `CHANGELOG-<version>.md` content as its body.
 
 ## Verification contract — why we use versioned URLs
 

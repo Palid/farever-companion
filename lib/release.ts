@@ -11,16 +11,20 @@ export type Release = {
 };
 
 export const RELEASE_CONFIG: Release = {
-  latestVersion: "0.1.2",
-  tag: "v0.1.2",
-  fileName: "farever-companion-v0.1.2.zip",
-  sha256: "fd37cd14f2872bef5f9c3eee21fac99f3009837f7a54b3dcb0e9655b17dd1586",
-  releasedAt: "2026-05-16",
-  fileSizeBytes: 1387165,
+  latestVersion: "0.1.3",
+  tag: "v0.1.3",
+  fileName: "farever-companion-v0.1.3.zip",
+  sha256: "1ad287c6ef50a9226dee995fe42fb3d2717c074c362d32d8beaf0252ff741a47",
+  releasedAt: "2026-05-18",
+  fileSizeBytes: 1371114,
 };
 
 export function releaseDownloadUrl(release: Release = RELEASE_CONFIG): string {
   return `${GITHUB_REPO_URL}/releases/download/${release.tag}/${release.fileName}`;
+}
+
+export function releaseNotesUrl(release: Release = RELEASE_CONFIG): string {
+  return release.changelogUrl ?? `${GITHUB_REPO_URL}/releases/tag/${release.tag}`;
 }
 
 export const PLACEHOLDER_SHA256 = "0".repeat(64);

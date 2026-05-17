@@ -7,6 +7,7 @@ import {
   formatReleaseDate,
   formatFileSize,
   releaseDownloadUrl,
+  releaseNotesUrl,
 } from "@/lib/release";
 import { Icon } from "@/app/_components/Icon";
 import { CopyButton } from "@/app/_components/CopyButton";
@@ -100,6 +101,19 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
         {" · "}
         released {formatReleaseDate(releasedAt)}
         {fileSizeFormatted ? ` · ${fileSizeFormatted}` : ""}
+        {!isPlaceholder && (
+          <>
+            {" · "}
+            <a
+              href={releaseNotesUrl(RELEASE_CONFIG)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              what&rsquo;s changed
+            </a>
+          </>
+        )}
       </p>
 
       {/* SHA-256 row */}
