@@ -53,7 +53,7 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
           Right-click the downloaded <code className="font-mono">.zip</code> &rarr; <strong>Properties</strong> &rarr; tick the <strong>Unblock</strong> checkbox at the bottom of the General tab &rarr; <strong>OK</strong>. <em>Then</em> extract.
         </p>
         <p className="mb-2">
-          If you skip this step, Windows may falsely demand admin rights when you copy <code className="font-mono">dinput8.dll</code> into your Farever folder, and even granting admin can fail with an &ldquo;unspecified error&rdquo;. This is a Windows quirk for files downloaded from the internet, not a problem with the file itself.
+          If you skip this step, Windows may falsely demand admin rights when you copy <code className="font-mono">dinput8.dll</code>{" "}into your Farever folder, and even granting admin can fail with an &ldquo;unspecified error&rdquo;. This is a Windows quirk for files downloaded from the internet, not a problem with the file itself.
         </p>
         <p className="mb-2">
           <strong>Already extracted and stuck?</strong> Either delete the extracted folder and re-extract after unblocking the zip, or open PowerShell in the extracted folder and run:

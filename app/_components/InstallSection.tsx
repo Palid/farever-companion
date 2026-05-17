@@ -68,7 +68,7 @@ export function InstallSection() {
             Uninstall
           </h3>
           <p className="mt-2 text-sm text-muted leading-relaxed">
-            Delete <code className="font-mono text-foreground mx-0.5">dinput8.dll</code> from the game folder. That&apos;s it
+            Delete <code className="font-mono text-foreground">dinput8.dll</code>{" "}from the game folder. That&apos;s it
             — no registry keys, no services, no leftover files. The game returns to its unmodified state
             immediately.
           </p>
@@ -83,7 +83,7 @@ export function InstallSection() {
             If you&apos;ve installed correctly but the overlay either doesn&apos;t appear in-game or appears but never updates, NVIDIA Smooth Motion is the most likely culprit.
           </p>
           <Callout tone="warning" icon="shield" className="mt-4">
-            <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong> Open the NVIDIA app, find Smooth Motion under Graphics &rarr; Global Settings (or under Farever&apos;s per-game settings), turn it off, and restart the game. Smooth Motion is incompatible with ImGui-based overlays under DirectX 11 &mdash; the overlay either fails to render entirely or renders once and never updates. Vulkan users aren&apos;t affected.
+            <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong>{" "}Open the NVIDIA app, find Smooth Motion under Graphics &rarr; Global Settings (or under Farever&apos;s per-game settings), turn it off, and restart the game. Smooth Motion is incompatible with ImGui-based overlays under DirectX 11 &mdash; the overlay either fails to render entirely or renders once and never updates. Vulkan users aren&apos;t affected.
           </Callout>
         </div>
 

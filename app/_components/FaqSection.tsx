@@ -67,12 +67,12 @@ const items: FaqItem[] = [
     q: "The overlay isn’t showing or isn’t updating — what should I check?",
     a: (
       <Callout tone="warning" icon="shield">
-        <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong> It&apos;s incompatible with ImGui-based
+        <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong>{" "}It&apos;s incompatible with ImGui-based
         overlays under DirectX 11 &mdash; the overlay either won&apos;t render at all or renders once and never updates
         while Smooth Motion is enabled. Open the NVIDIA app, disable Smooth Motion (either globally or under
         Farever&apos;s per-game settings), and restart the game. Vulkan users aren&apos;t affected. If the overlay still
         doesn&apos;t appear or refresh after that, double-check that{" "}
-        <code className="font-mono text-foreground">dinput8.dll</code> is in the same folder as the game&apos;s
+        <code className="font-mono text-foreground">dinput8.dll</code>{" "}is in the same folder as the game&apos;s
         executable.
       </Callout>
     ),
