@@ -1,55 +1,44 @@
 # Releasing Farever Companion
 
-The marketing site (the Next.js app in this repo) is the canonical source for download links and SHA-256 verification. Releases are cut by:
+The marketing site (the Next.js app in this repo) is the canonical source for download links and SHA-256 verification. A release ties together:
 
-1. Bumping `lib/release.ts` to point at the new version + hash
-2. Committing + tagging + pushing
-3. Attaching the built binary to a matching GitHub Release, using `releases/CHANGELOG-<version>.md` as the release body
+- a versioned zip in `releases/farever-companion-v<version>.zip` (the binary users download)
+- a changelog file in `releases/CHANGELOG-<version>.md` (prose only — what's actually new). The script appends an auto-generated "Download & verify" footer (asset link, version, date, size, SHA-256, verify commands, Windows Unblock instructions) before publishing, so the on-disk file should not contain that footer itself.
+- a bump of `lib/release.ts` + `package.json` so the site CTA flips to the new version
+- a matching `v<version>` git tag and GitHub Release with the zip attached
 
-The site automatically redeploys to GitHub Pages when `main` is pushed (see `.github/workflows/deploy.yml`), so the CTA flips to the new version as soon as steps 2 + 3 are done. The "what's changed" / "Changelog" links on the site point at `https://github.com/Palid/farever-companion/releases/tag/<tag>`, so the release body on GitHub *is* the changelog users see.
+GitHub Pages redeploys automatically when `main` is pushed (see `.github/workflows/deploy.yml`), so the site updates within a minute of the release script finishing.
 
-## One-shot release flow
+## The script does everything
 
 ```bash
-# 0. Build the release artifact and drop it in ./releases/ (gitignored).
-#    Example: ./releases/farever-companion-v0.1.0.zip
+# 1. Build the artifact and drop it in ./releases/
+#    e.g. ./releases/farever-companion-v0.1.4.zip
 
-# 1. Compute the SHA-256 (macOS / Linux):
-shasum -a 256 farever-companion-v0.1.0.zip
-# Windows (PowerShell):
-#   Get-FileHash .\farever-companion-v0.1.0.zip -Algorithm SHA256
+# 2. Write ./releases/CHANGELOG-0.1.4.md — this is the release body on GitHub.
 
-# 2. Note the file size in bytes:
-wc -c farever-companion-v0.1.0.zip
-
-# 3. Write ./releases/CHANGELOG-0.1.0.md describing what changed in this
-#    version. This file is the release body on GitHub — what users see when
-#    they click "what's changed" / "Changelog" on the site.
-
-# 4. Edit lib/release.ts — set latestVersion, tag, fileName, sha256, releasedAt,
-#    and fileSizeBytes. Example:
-#
-#      latestVersion: "0.1.0",
-#      tag: "v0.1.0",
-#      fileName: "farever-companion-v0.1.0.zip",
-#      sha256: "<lowercase 64-char hex from step 1>",
-#      releasedAt: "2026-05-14",
-#      fileSizeBytes: <bytes from step 2>,
-
-# 5. Commit + tag + push:
-git -c commit.gpgsign=false commit -am "release: v0.1.0"
-git tag v0.1.0
-git push
-git push --tags
-
-# 6. Create the GitHub Release with the asset attached, using the changelog
-#    file as the release body (so the site's "Changelog" link renders it):
-gh release create v0.1.0 ./releases/farever-companion-v0.1.0.zip \
-  --title "v0.1.0" \
-  --notes-file ./releases/CHANGELOG-0.1.0.md
+# 3. Run:
+npm run release -- 0.1.4
 ```
 
-After step 6, GitHub Pages will redeploy the site (triggered by the push in step 5 via `.github/workflows/deploy.yml`), and the download CTA on farevercompanion.com will point at the new versioned URL. The "what's changed" link next to the version (and the "Changelog" link in the footer) will resolve to the GitHub release page for the new tag, with the `CHANGELOG-<version>.md` content as its body.
+The script (`scripts/release.mjs`) will:
+
+1. Verify the zip and changelog exist for the given version.
+2. Verify the working tree is clean, you're on `main`, you're up-to-date with `origin/main`, the tag doesn't already exist locally or on the remote, and `gh` is authenticated.
+3. Compute SHA-256 + file size, set `releasedAt` to today (UTC).
+4. Rewrite `RELEASE_CONFIG` in `lib/release.ts` and bump `package.json#version`.
+5. Show the diff and prompt for confirmation (`--yes` to skip).
+6. Commit (`release: v<version>`), tag, push branch and tag.
+7. Build the GitHub release body: `CHANGELOG-<version>.md` + auto-generated "Download & verify" footer (asset link, version, date, size, SHA-256, verify commands, Windows Unblock instructions — all derived from the computed values, so they can never drift from `RELEASE_CONFIG`).
+8. `gh release create <tag> ./releases/<file> --title <tag> --notes-file <tmp body>`
+
+If you abort at the confirmation prompt, the script reverts `lib/release.ts` and `package.json` and exits cleanly. After the commit step, recovery is manual (see below).
+
+### Flags
+
+- `--yes` / `-y` — skip the confirmation prompt (use in CI or when you trust the diff).
+- `--dry-run` — do everything up to the diff, then revert and exit. Nothing is committed.
+- `--skip-push` — commit and tag locally but don't push or create the GitHub release. Prints the manual commands so you can finish by hand.
 
 ## Verification contract — why we use versioned URLs
 
@@ -57,14 +46,33 @@ The download button on the site links to `https://github.com/Palid/farever-compa
 
 ## Placeholder safety
 
-While `RELEASE_CONFIG.sha256` is the 64-zero placeholder, the site CTA renders a non-interactive "Build pending — coming soon" state. The site is safe to deploy publicly before the first real release ships.
+While `RELEASE_CONFIG.sha256` is the 64-zero placeholder, the site CTA renders a non-interactive "Build pending — coming soon" state and the "Changelog" link is hidden. The site is safe to deploy publicly before the first real release ships.
+
+## If a release goes wrong
+
+**Aborted at the confirmation prompt:** the script already restored `lib/release.ts` and `package.json`. Nothing to do.
+
+**Failed after the commit but before the push:**
+
+```bash
+git tag -d v<version>           # drop the local tag
+git reset --hard HEAD~1         # drop the release commit (you'll lose the bump)
+```
+
+**Failed during `gh release create` (tag was already pushed):** finish the release manually — the tag is the canonical thing the site keys off of:
+
+```bash
+gh release create v<version> ./releases/farever-companion-v<version>.zip \
+  --title "v<version>" \
+  --notes-file ./releases/CHANGELOG-<version>.md
+```
 
 ## If you ever revoke a release
 
 If a release needs to be pulled (security issue, wrong asset, etc.):
 
 1. Delete the GitHub Release (or mark it draft) so the download URL stops working.
-2. Roll `lib/release.ts` back to a known-good version (or, if none exists, back to the all-zero placeholder).
+2. Roll `lib/release.ts` back to a known-good version (or, if none exists, back to the all-zero placeholder) and bump `package.json` accordingly.
 3. Push. The site will redeploy and the CTA will reflect the rolled-back state.
 
 Do **not** edit a release asset in place — the SHA-256 on the site is the canonical claim about what was published, and editing an asset breaks that claim invisibly.
