@@ -16,8 +16,7 @@ export function SiteFooter() {
         <div className="mt-6 border-t border-border" />
 
         <p className="mt-6 text-xs text-muted leading-relaxed max-w-3xl">
-          Farever Companion is a community-made tool. Farever is a trademark of Shiro Games. This project is not
-          affiliated with, endorsed by, or sponsored by Shiro Games.
+          Farever Companion is a community-made tool. Farever is a trademark of Shiro Games. This project is not affiliated with, endorsed by, or sponsored by Shiro Games.
         </p>
 
         <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.15em] text-subtle">
