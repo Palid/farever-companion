@@ -1,4 +1,5 @@
 import { Icon } from "@/app/_components/Icon";
+import { Callout } from "@/app/_components/Callout";
 
 const steps: { label: string; detail: string }[] = [
   {
@@ -81,12 +82,9 @@ export function InstallSection() {
           <p className="mt-2 text-sm text-muted leading-relaxed">
             If you&apos;ve installed correctly but the overlay either doesn&apos;t appear in-game or appears but never updates, NVIDIA Smooth Motion is the most likely culprit.
           </p>
-          <div className="mt-4 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm text-foreground/90 flex items-start gap-3">
-            <Icon name="shield" className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-            <span>
-              <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong> Open the NVIDIA app, find <strong>Smooth Motion</strong> (either under Graphics &rarr; Global Settings or Farever&apos;s per-game settings), turn it off, and restart the game. Smooth Motion is incompatible with ImGui-based overlays under DirectX 11 &mdash; the overlay either fails to render entirely or renders once and never updates. Vulkan users aren&apos;t affected.
-            </span>
-          </div>
+          <Callout tone="warning" icon="shield" className="mt-4">
+            <strong className="text-warning">Disable NVIDIA Smooth Motion.</strong> Open the NVIDIA app, find <strong>Smooth Motion</strong> (either under Graphics &rarr; Global Settings or Farever&apos;s per-game settings), turn it off, and restart the game. Smooth Motion is incompatible with ImGui-based overlays under DirectX 11 &mdash; the overlay either fails to render entirely or renders once and never updates. Vulkan users aren&apos;t affected.
+          </Callout>
         </div>
 
         <p className="mt-6 text-sm text-muted">

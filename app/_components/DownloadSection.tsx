@@ -3,6 +3,7 @@ import { RELEASE_CONFIG } from "@/lib/release";
 import { Icon } from "@/app/_components/Icon";
 import { CopyButton } from "@/app/_components/CopyButton";
 import { VerifiedDownloadCTA } from "@/app/_components/VerifiedDownloadCTA";
+import { Callout } from "@/app/_components/Callout";
 
 export function DownloadSection() {
   return (
@@ -15,16 +16,13 @@ export function DownloadSection() {
           <code className="font-mono text-foreground">{SITE_DOMAIN}</code>.
         </p>
 
-        <div className="mt-8 rounded-lg border border-warning/50 bg-warning/10 p-4 text-sm text-foreground/90 flex items-start gap-3">
-          <Icon name="lock" className="w-4 h-4 text-warning mt-0.5 shrink-0" />
-          <span>
-            <strong className="text-warning">
-              Only download from <code className="font-mono">{SITE_DOMAIN}</code>.
-            </strong>{" "}
-            Anything claiming to be Farever Companion that wasn&apos;t downloaded here and doesn&apos;t match the
-            SHA-256 below is not ours. Don&apos;t run it.
-          </span>
-        </div>
+        <Callout tone="warning" icon="lock" className="mt-8">
+          <strong className="text-warning">
+            Only download from <code className="font-mono">{SITE_DOMAIN}</code>.
+          </strong>{" "}
+          Anything claiming to be Farever Companion that wasn&apos;t downloaded here and doesn&apos;t match the
+          SHA-256 below is not ours. Don&apos;t run it.
+        </Callout>
 
         <div className="mt-6">
           <VerifiedDownloadCTA variant="section" />
