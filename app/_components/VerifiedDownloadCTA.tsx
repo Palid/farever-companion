@@ -43,6 +43,28 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
         </span>
       </div>
 
+      {/* Windows Unblock callout */}
+      <div className="mb-5 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm text-foreground/90 flex items-start gap-3">
+        <Icon name="shield" className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+        <div>
+          <p className="mb-2">
+            <strong className="text-accent">Windows users &mdash; please do this before extracting</strong>
+          </p>
+          <p className="mb-2">
+            Right-click the downloaded <code className="font-mono">.zip</code> &rarr; <strong>Properties</strong> &rarr; tick the <strong>Unblock</strong> checkbox at the bottom of the General tab &rarr; <strong>OK</strong>. <em>Then</em> extract.
+          </p>
+          <p className="mb-2">
+            If you skip this step, Windows may falsely demand admin rights when you copy <code className="font-mono">dinput8.dll</code> into your Farever folder, and even granting admin can fail with an &ldquo;unspecified error&rdquo;. This is a Windows quirk for files downloaded from the internet, not a problem with the file itself.
+          </p>
+          <p className="mb-2">
+            <strong>Already extracted and stuck?</strong> Either delete the extracted folder and re-extract after unblocking the zip, or open PowerShell in the extracted folder and run:
+          </p>
+          <div className="rounded-lg border border-border bg-surface p-3">
+            <code className="font-mono text-xs text-foreground whitespace-pre select-all">Get-ChildItem -Recurse | Unblock-File</code>
+          </div>
+        </div>
+      </div>
+
       {/* Primary button */}
       {isPlaceholder ? (
         <button
