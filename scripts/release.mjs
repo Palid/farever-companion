@@ -67,7 +67,7 @@ ok(`working tree clean`);
 
 run("git", ["fetch", "--quiet", "--tags", "origin"]);
 
-if (capture("git", ["rev-parse", "--verify", "--quiet", `refs/tags/${tag}`])) {
+if (capture("git", ["rev-parse", "--verify", "--quiet", `refs/tags/${tag}`], { allowFail: true })) {
   die(`tag ${tag} already exists locally`);
 }
 if (capture("git", ["ls-remote", "--tags", "origin", `refs/tags/${tag}`])) {
