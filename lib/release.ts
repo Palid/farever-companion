@@ -11,12 +11,12 @@ export type Release = {
 };
 
 export const RELEASE_CONFIG: Release = {
-  latestVersion: "0.1.4",
-  tag: "v0.1.4",
-  fileName: "farever-companion-v0.1.4.zip",
-  sha256: "6938b3233d5137b8a60293daec379680ae2d735e4bc40bbd71878ff4160b9992",
-  releasedAt: "2026-05-21",
-  fileSizeBytes: 1508352,
+  latestVersion: "0.1.5",
+  tag: "v0.1.5",
+  fileName: "farever-companion-v0.1.5.zip",
+  sha256: "9fda020c8011f5e7ea7eedac84ea75b878d4459afbf013b005a231ef2f4c231c",
+  releasedAt: "2026-05-22",
+  fileSizeBytes: 1524322,
 };
 
 export function releaseDownloadUrl(release: Release = RELEASE_CONFIG): string {
