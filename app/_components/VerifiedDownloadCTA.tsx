@@ -21,7 +21,8 @@ interface VerifiedDownloadCTAProps {
 
 export function VerifiedDownloadCTA({ variant = "section", className }: VerifiedDownloadCTAProps) {
   const isPlaceholder = isPlaceholderRelease();
-  const { latestVersion, fileName, sha256, releasedAt, fileSizeBytes } = RELEASE_CONFIG;
+  const { latestVersion, fileName, sha256, dllFileName, dllSha256, releasedAt, fileSizeBytes } =
+    RELEASE_CONFIG;
 
   const fileSizeFormatted = formatFileSize(fileSizeBytes);
 
@@ -116,12 +117,12 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
         )}
       </p>
 
-      {/* SHA-256 row */}
-      <div className="mt-4">
+      {/* SHA-256 rows — two hashes: the .zip you download, and the dll you run */}
+      <div className="mt-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start gap-2">
           <div className="flex-1 min-w-0">
             <span className="block text-subtle text-xs uppercase tracking-wider mb-1">
-              SHA-256{isPlaceholder ? " · placeholder" : ""}
+              SHA-256 · .zip download{isPlaceholder ? " · placeholder" : ""}
             </span>
             <span
               className={`font-mono text-xs break-all select-all ${isPlaceholder ? "text-muted" : "text-foreground"}`}
@@ -130,14 +131,33 @@ export function VerifiedDownloadCTA({ variant = "section", className }: Verified
             </span>
           </div>
           <div className="shrink-0">
-            <CopyButton value={sha256} label="Copy SHA-256" />
+            <CopyButton value={sha256} label="Copy zip SHA-256" />
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <span className="block text-subtle text-xs uppercase tracking-wider mb-1">
+              SHA-256 · <code className="font-mono normal-case">{dllFileName}</code>
+              {isPlaceholder ? " · placeholder" : ""}
+            </span>
+            <span
+              className={`font-mono text-xs break-all select-all ${isPlaceholder ? "text-muted" : "text-foreground"}`}
+            >
+              {dllSha256}
+            </span>
+          </div>
+          <div className="shrink-0">
+            <CopyButton value={dllSha256} label="Copy dll SHA-256" />
           </div>
         </div>
       </div>
 
       {/* Caveat */}
       <p className="text-xs text-muted mt-3">
-        If the SHA-256 of your downloaded file doesn&apos;t match this exactly, it&apos;s not our binary. Delete it.
+        Verify the <code className="font-mono">.zip</code>{" "}against the first hash before extracting, then verify{" "}
+        <code className="font-mono">{dllFileName}</code>{" "}against the second before copying it into your Farever
+        folder. The dll hash also ships inside the zip as a{" "}<code className="font-mono">current-hash</code>{" "}file.
+        If either doesn&apos;t match exactly, it&apos;s not our binary — delete it.
       </p>
     </div>
   );

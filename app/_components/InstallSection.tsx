@@ -5,12 +5,12 @@ const steps: { label: string; detail: string }[] = [
   {
     label: "Download the zip",
     detail:
-      "Grab the latest build from the Download section above. The release is a .zip archive containing dinput8.dll, a README.txt, and the font license files.",
+      "Grab the latest build from the Download section above. The release is a .zip archive containing dinput8.dll, a README.txt, a current-hash file (the dll’s SHA-256), and the font license files.",
   },
   {
     label: "Unzip the archive",
     detail:
-      "Extract the zip. You’ll get dinput8.dll and a README.txt (plus the bundled font licenses).",
+      "Extract the zip. You’ll get dinput8.dll, a README.txt, and a current-hash file you can check the dll against (plus the bundled font licenses).",
   },
   {
     label: "Read the README.txt",
