@@ -3,8 +3,15 @@ import { GITHUB_REPO_URL } from "@/lib/site";
 export type Release = {
   latestVersion: string;
   tag: string;
+  /** Name of the downloadable zip artifact. */
   fileName: string;
+  /** SHA-256 of the .zip artifact — verifies the file you downloaded. */
   sha256: string;
+  /** Name of the payload inside the zip that users copy into the game folder. */
+  dllFileName: string;
+  /** SHA-256 of {@link dllFileName} — verifies the binary you actually run.
+   *  Equals the `current-hash` file shipped inside the zip. */
+  dllSha256: string;
   releasedAt: string;
   fileSizeBytes?: number;
   changelogUrl?: string;
@@ -15,6 +22,8 @@ export const RELEASE_CONFIG: Release = {
   tag: "v0.1.5",
   fileName: "farever-companion-v0.1.5.zip",
   sha256: "9fda020c8011f5e7ea7eedac84ea75b878d4459afbf013b005a231ef2f4c231c",
+  dllFileName: "dinput8.dll",
+  dllSha256: "08fd9a7f10867f8e1aa916e1ce56d7ce23a04ffa5a297a6489cd4ea7dd15f34e",
   releasedAt: "2026-05-22",
   fileSizeBytes: 1524322,
 };
