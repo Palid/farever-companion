@@ -1,6 +1,5 @@
 import { SITE_DOMAIN } from "@/lib/site";
 import { RELEASE_CONFIG } from "@/lib/release";
-import { Icon } from "@/app/_components/Icon";
 import { CopyButton } from "@/app/_components/CopyButton";
 import { VerifiedDownloadCTA } from "@/app/_components/VerifiedDownloadCTA";
 import { Callout } from "@/app/_components/Callout";
@@ -29,7 +28,9 @@ export function DownloadSection() {
         </div>
 
         <div className="mt-8">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-subtle">Verify the file</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-subtle">
+            Verify the download (.zip)
+          </p>
           <div className="mt-3 rounded-lg border border-border bg-surface p-4 flex items-start justify-between gap-4">
             <code className="font-mono text-sm text-foreground break-all">
               Get-FileHash .\{RELEASE_CONFIG.fileName} -Algorithm SHA256
@@ -41,14 +42,37 @@ export function DownloadSection() {
           </div>
           <p className="mt-3 text-sm text-muted">
             Run this in the folder where you saved the file. The output&apos;s{" "}
-            <code className="font-mono text-foreground">Hash</code> value must match the SHA-256 above, character for
-            character.
+            <code className="font-mono text-foreground">Hash</code> value must match the{" "}
+            <strong>SHA-256 · .zip download</strong>{" "}above, character for character.
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-subtle">
+            Verify the binary (<code className="font-mono normal-case">{RELEASE_CONFIG.dllFileName}</code>)
+          </p>
+          <div className="mt-3 rounded-lg border border-border bg-surface p-4 flex items-start justify-between gap-4">
+            <code className="font-mono text-sm text-foreground break-all">
+              Get-FileHash .\{RELEASE_CONFIG.dllFileName} -Algorithm SHA256
+            </code>
+            <CopyButton
+              value={`Get-FileHash .\\${RELEASE_CONFIG.dllFileName} -Algorithm SHA256`}
+              label="Copy"
+            />
+          </div>
+          <p className="mt-3 text-sm text-muted">
+            After extracting, run this in the extracted folder. The output must match the{" "}
+            <strong>
+              SHA-256 · <code className="font-mono text-foreground">{RELEASE_CONFIG.dllFileName}</code>
+            </strong>{" "}
+            above — the same value bundled in the zip&apos;s{" "}
+            <code className="font-mono text-foreground">current-hash</code> file.
           </p>
         </div>
 
         <p className="mt-6 text-sm text-muted">
           Your browser may warn you about the download — DLLs and low-distribution files get flagged routinely.
-          That&apos;s expected. Verifying the SHA-256 against the value above is how you confirm authenticity before
+          That&apos;s expected. Verifying both SHA-256 values against those above is how you confirm authenticity before
           dropping the file into your Farever directory.
         </p>
       </div>
