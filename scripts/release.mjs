@@ -48,6 +48,12 @@ const fileName = `farever-companion-${tag}.zip`;
 const zipPath = path.join(REPO_ROOT, "releases", fileName);
 const changelogPath = path.join(REPO_ROOT, "releases", `CHANGELOG-${version}.md`);
 
+// The payload users copy into their game folder, and the hash file the zip
+// ships so users (and the running overlay) can verify that exact binary.
+const DLL_FILE_NAME = "dinput8.dll";
+const HASH_FILE_NAME = "current-hash";
+const README_FILE_NAME = "README.txt";
+
 // ── Preflight ────────────────────────────────────────────────────────────────
 step("Preflight");
 
@@ -86,14 +92,29 @@ if (spawnSync("gh", ["auth", "status"], { stdio: "ignore" }).status !== 0) {
 }
 ok(`gh CLI authenticated`);
 
-// ── Hash + size ──────────────────────────────────────────────────────────────
-step("Hashing artifact");
+if (spawnSync("unzip", ["-v"], { stdio: "ignore" }).status !== 0) {
+  die(`"unzip" not found on PATH — required to inspect and verify the artifact`);
+}
+ok(`unzip available`);
+
+// ── Inspect + hash artifact ───────────────────────────────────────────────────
+// The artifact is a zip containing the dll, a README, a current-hash file and
+// font licenses. We verify that structure, then derive TWO hashes:
+//   • sha256     — of the .zip, for download integrity
+//   • dllSha256  — of the dll inside, recomputed and checked against the
+//                  shipped current-hash, for the binary users actually run.
+step("Inspecting artifact");
+const dllSha256 = inspectArtifact(zipPath);
+ok(`structure valid — contains ${DLL_FILE_NAME}, ${HASH_FILE_NAME}, ${README_FILE_NAME}`);
+ok(`${DLL_FILE_NAME} matches shipped ${HASH_FILE_NAME}`);
+
 const sha256 = await sha256OfFile(zipPath);
 const fileSizeBytes = statSync(zipPath).size;
 const releasedAt = new Date().toISOString().slice(0, 10);
-info(`sha256:  ${sha256}`);
-info(`size:    ${fileSizeBytes} bytes (${(fileSizeBytes / (1024 * 1024)).toFixed(2)} MB)`);
-info(`date:    ${releasedAt}`);
+info(`zip sha256:  ${sha256}`);
+info(`dll sha256:  ${dllSha256}`);
+info(`size:        ${fileSizeBytes} bytes (${(fileSizeBytes / (1024 * 1024)).toFixed(2)} MB)`);
+info(`date:        ${releasedAt}`);
 
 // ── Rewrite lib/release.ts + package.json ────────────────────────────────────
 step("Updating release config");
@@ -105,6 +126,8 @@ const newConfig =
   `  tag: "${tag}",\n` +
   `  fileName: "${fileName}",\n` +
   `  sha256: "${sha256}",\n` +
+  `  dllFileName: "${DLL_FILE_NAME}",\n` +
+  `  dllSha256: "${dllSha256}",\n` +
   `  releasedAt: "${releasedAt}",\n` +
   `  fileSizeBytes: ${fileSizeBytes},\n` +
   `};`;
@@ -247,7 +270,13 @@ function buildFooter() {
     "",
     "## Download & verify",
     "",
-    `Only download from [${SITE_DOMAIN}](${SITE_URL}). Anything claiming to be Farever Companion that doesn't match the SHA-256 below is not ours — don't run it.`,
+    `Only download from [${SITE_DOMAIN}](${SITE_URL}). Anything claiming to be Farever Companion that doesn't match the SHA-256 hashes below is not ours — don't run it.`,
+    "",
+    "There are two hashes: one for the **`.zip` you download**, and one for the **`" +
+      DLL_FILE_NAME +
+      "` you copy into your game folder**. The dll hash also ships inside the zip as a `" +
+      HASH_FILE_NAME +
+      "` file.",
     "",
     "| | |",
     "| --- | --- |",
@@ -255,9 +284,10 @@ function buildFooter() {
     `| **Version** | \`${version}\` |`,
     `| **Released** | ${releasedAt} |`,
     `| **Size** | ${sizeMb} MB (${sizeBytes} bytes) |`,
-    `| **SHA-256** | \`${sha256}\` |`,
+    `| **SHA-256 (zip)** | \`${sha256}\` |`,
+    `| **SHA-256 (${DLL_FILE_NAME})** | \`${dllSha256}\` |`,
     "",
-    "### Verify before running",
+    "### 1. Verify the download (the `.zip`)",
     "",
     "Windows (PowerShell), run in the folder where you saved the file:",
     "",
@@ -271,7 +301,23 @@ function buildFooter() {
     `shasum -a 256 ${fileName}`,
     "```",
     "",
-    "The output's `Hash` value must match the SHA-256 above, character for character. If it doesn't, delete the file.",
+    "The output's `Hash` value must match **SHA-256 (zip)** above, character for character. If it doesn't, delete the file.",
+    "",
+    `### 2. Verify the binary (\`${DLL_FILE_NAME}\`) after extracting`,
+    "",
+    `Once you've extracted the zip, verify \`${DLL_FILE_NAME}\` before copying it into your Farever folder. Run this in the extracted folder:`,
+    "",
+    "```powershell",
+    `Get-FileHash .\\${DLL_FILE_NAME} -Algorithm SHA256`,
+    "```",
+    "",
+    "macOS / Linux:",
+    "",
+    "```bash",
+    `shasum -a 256 ${DLL_FILE_NAME}`,
+    "```",
+    "",
+    `The output must match **SHA-256 (${DLL_FILE_NAME})** above — which is also the value in the bundled \`${HASH_FILE_NAME}\` file. If it doesn't, don't run it.`,
     "",
     "### Windows users — please do this before extracting",
     "",
@@ -292,4 +338,67 @@ async function sha256OfFile(filePath) {
       .on("error", reject);
   });
   return hash.digest("hex");
+}
+
+// Inspect the release zip: enforce the expected structure, guard against the
+// double-zip packaging bug (v0.1.3–v0.1.5), and verify the dll matches its
+// shipped current-hash. Returns the dll's SHA-256 (lowercase hex).
+function inspectArtifact(zip) {
+  const files = zipEntries(zip).filter((e) => !e.endsWith("/"));
+
+  // The bug shipped 3× was a zip whose only entry was another zip of the same
+  // name. Catch any single nested-zip artifact before it can be published.
+  if (files.length === 1 && /\.zip$/i.test(files[0])) {
+    die(
+      `artifact is double-zipped — its only entry is "${files[0]}".\n` +
+        `  Re-package so the zip contains ${DLL_FILE_NAME}, ${HASH_FILE_NAME} and ${README_FILE_NAME} ` +
+        `directly (not a nested .zip).`,
+    );
+  }
+
+  const missing = [DLL_FILE_NAME, HASH_FILE_NAME, README_FILE_NAME].filter((n) => !files.includes(n));
+  if (missing.length) {
+    die(
+      `artifact is missing required entr${missing.length === 1 ? "y" : "ies"}: ${missing.join(", ")}.\n` +
+        `  Found: ${files.join(", ") || "(nothing)"}`,
+    );
+  }
+
+  // Recompute the dll hash from the bytes inside the zip and check it against
+  // the shipped current-hash. A mismatch means a broken or stale packaging step.
+  const dllSha256 = createHash("sha256").update(readZipEntry(zip, DLL_FILE_NAME)).digest("hex");
+  const embedded = readZipEntry(zip, HASH_FILE_NAME).toString("utf8").trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(embedded)) {
+    die(`${HASH_FILE_NAME} inside the zip is not a SHA-256 hex string: "${embedded}"`);
+  }
+  if (embedded !== dllSha256) {
+    die(
+      `${DLL_FILE_NAME} does not match the shipped ${HASH_FILE_NAME} — the artifact is inconsistent:\n` +
+        `  ${HASH_FILE_NAME}:        ${embedded}\n` +
+        `  actual ${DLL_FILE_NAME}: ${dllSha256}\n` +
+        `  Do not release it.`,
+    );
+  }
+  return dllSha256;
+}
+
+// List entries in a zip, one path per line (`unzip -Z1` = zipinfo short form).
+// Directory members come back with a trailing slash.
+function zipEntries(zip) {
+  return execFileSync("unzip", ["-Z1", zip], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  })
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+// Read a single zip entry's raw bytes to a Buffer (`unzip -p` → stdout).
+function readZipEntry(zip, entry) {
+  return execFileSync("unzip", ["-p", zip, entry], {
+    cwd: REPO_ROOT,
+    maxBuffer: 256 * 1024 * 1024,
+  });
 }
