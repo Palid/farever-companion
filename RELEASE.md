@@ -3,11 +3,30 @@
 The marketing site (the Next.js app in this repo) is the canonical source for download links and SHA-256 verification. A release ties together:
 
 - a versioned zip in `releases/farever-companion-v<version>.zip` (the binary users download)
-- a changelog file in `releases/CHANGELOG-<version>.md` (prose only — what's actually new). The script appends an auto-generated "Download & verify" footer (asset link, version, date, size, SHA-256, verify commands, Windows Unblock instructions) before publishing, so the on-disk file should not contain that footer itself.
+- a changelog file in `releases/CHANGELOG-<version>.md` (prose only — what's actually new). The script appends an auto-generated "Download & verify" footer (asset link, version, date, size, both SHA-256 hashes, verify commands, Windows Unblock instructions) before publishing, so the on-disk file should not contain that footer itself.
 - a bump of `lib/release.ts` + `package.json` so the site CTA flips to the new version
 - a matching `v<version>` git tag and GitHub Release with the zip attached
 
 GitHub Pages redeploys automatically when `main` is pushed (see `.github/workflows/deploy.yml`), so the site updates within a minute of the release script finishing.
+
+## Artifact structure (important)
+
+The release zip must contain the payload **directly** — not a nested zip:
+
+```
+farever-companion-v<version>.zip
+├── dinput8.dll       ← the binary users copy into the game folder
+├── current-hash      ← the dll's SHA-256 (bare lowercase hex + newline)
+├── README.txt        ← install notes for that exact build
+└── licenses/         ← bundled font licenses
+```
+
+There are **two hashes**, and the site/release surface both:
+
+- **zip SHA-256** (`RELEASE_CONFIG.sha256`) — verifies the `.zip` users download.
+- **dll SHA-256** (`RELEASE_CONFIG.dllSha256`) — verifies `dinput8.dll`, the binary users actually run. This is the same value the zip ships as `current-hash`, and the value `version-check.json` returns as `hash` (the running overlay can only self-verify its own binary, never the download wrapper).
+
+> ⚠️ **Do not double-zip.** v0.1.3–v0.1.5 accidentally shipped a zip whose only entry was *another* zip of the same name, so users who extracted got a nested `.zip` instead of the dll. The release script now hard-fails on this (and on a missing `dinput8.dll`/`current-hash`/`README.txt`, or a `current-hash` that doesn't match the dll), so a malformed artifact can't be published.
 
 ## The script does everything
 
@@ -24,13 +43,14 @@ npm run release -- 0.1.4
 The script (`scripts/release.mjs`) will:
 
 1. Verify the zip and changelog exist for the given version.
-2. Verify the working tree is clean, you're on `main`, you're up-to-date with `origin/main`, the tag doesn't already exist locally or on the remote, and `gh` is authenticated.
-3. Compute SHA-256 + file size, set `releasedAt` to today (UTC).
-4. Rewrite `RELEASE_CONFIG` in `lib/release.ts` and bump `package.json#version`.
-5. Show the diff and prompt for confirmation (`--yes` to skip).
-6. Commit (`release: v<version>`), tag, push branch and tag.
-7. Build the GitHub release body: `CHANGELOG-<version>.md` + auto-generated "Download & verify" footer (asset link, version, date, size, SHA-256, verify commands, Windows Unblock instructions — all derived from the computed values, so they can never drift from `RELEASE_CONFIG`).
-8. `gh release create <tag> ./releases/<file> --title <tag> --notes-file <tmp body>`
+2. Verify the working tree is clean, you're on `main`, you're up-to-date with `origin/main`, the tag doesn't already exist locally or on the remote, and `gh` + `unzip` are available.
+3. Inspect the zip: reject a double-zip, require `dinput8.dll`/`current-hash`/`README.txt`, recompute the dll's SHA-256 and assert it equals the shipped `current-hash`.
+4. Compute the zip SHA-256 + file size, set `releasedAt` to today (UTC).
+5. Rewrite `RELEASE_CONFIG` in `lib/release.ts` (both hashes) and bump `package.json#version`.
+6. Show the diff and prompt for confirmation (`--yes` to skip).
+7. Commit (`release: v<version>`), tag, push branch and tag.
+8. Build the GitHub release body: `CHANGELOG-<version>.md` + auto-generated "Download & verify" footer (asset link, version, date, size, both SHA-256 hashes, verify commands, Windows Unblock instructions — all derived from the computed values, so they can never drift from `RELEASE_CONFIG`).
+9. `gh release create <tag> ./releases/<file> --title <tag> --notes-file <tmp body>`
 
 If you abort at the confirmation prompt, the script reverts `lib/release.ts` and `package.json` and exits cleanly. After the commit step, recovery is manual (see below).
 
