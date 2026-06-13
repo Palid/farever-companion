@@ -31,7 +31,7 @@ export default function SchemasPage() {
           <code className="font-mono text-sm text-accent">/logs-schema/&#123;version&#125;.json</code>.
           The source of truth lives in the{" "}
           <a
-            href={`${GITHUB_REPO_URL}/tree/main/releases/encounter-log.schema.json`}
+            href={`${GITHUB_REPO_URL}/blob/main/public/logs-schema/`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent hover:brightness-110 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
