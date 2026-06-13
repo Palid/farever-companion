@@ -6,11 +6,17 @@ import { SITE_DOMAIN } from "@/lib/site";
 import { Icon } from "@/app/_components/Icon";
 import { trackEvent } from "@/lib/analytics";
 
+// Anchor links are root-relative (/#…) so they work correctly from any route.
+// The "Schemas" entry has no hash — it's a full route link rendered via Next's <Link>.
 const NAV_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "Download", href: "#download" },
-  { label: "FAQ", href: "#faq" },
-  { label: "Support", href: "#support" },
+  { label: "Features", href: "/#features", hash: "features" },
+  { label: "Download", href: "/#download", hash: "download" },
+  { label: "FAQ", href: "/#faq", hash: "faq" },
+  { label: "Support", href: "/#support", hash: "support" },
+] as const;
+
+const ROUTE_LINKS = [
+  { label: "Schemas", href: "/schemas" },
 ] as const;
 
 // Ribbon height is ~36-40px (top-9). Adjust if the ribbon height changes.
@@ -20,15 +26,14 @@ export function NavBar() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const ids = NAV_LINKS.map((l) => l.href.slice(1));
     const observers: IntersectionObserver[] = [];
 
-    ids.forEach((id) => {
-      const el = document.getElementById(id);
+    NAV_LINKS.forEach(({ hash }) => {
+      const el = document.getElementById(hash);
       if (!el) return;
       const obs = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting) setActiveSection(id);
+          if (entry.isIntersecting) setActiveSection(hash);
         },
         { rootMargin: "-20% 0px -60% 0px" }
       );
@@ -53,9 +58,9 @@ export function NavBar() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Wordmark */}
         <Link
-          href="#top"
+          href="/"
           className="flex flex-col leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
-          onClick={() => trackEvent("jump_link_click", { target: "#top", location: "navbar_wordmark" })}
+          onClick={() => trackEvent("jump_link_click", { target: "/", location: "navbar_wordmark" })}
         >
           <span className="font-semibold tracking-tight text-foreground">Farever Companion</span>
           <span className="font-mono text-[10px] text-subtle">· {SITE_DOMAIN}</span>
@@ -69,7 +74,7 @@ export function NavBar() {
               href={link.href}
               onClick={() => trackEvent("jump_link_click", { target: link.href, location: "navbar_desktop" })}
               className={`text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded ${
-                activeSection === link.href.slice(1)
+                activeSection === link.hash
                   ? "text-accent"
                   : "text-muted hover:text-foreground"
               }`}
@@ -77,17 +82,26 @@ export function NavBar() {
               {link.label}
             </a>
           ))}
+          {ROUTE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded text-muted hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Desktop CTA pill */}
-        <a
-          href="#download"
-          onClick={() => trackEvent("jump_link_click", { target: "#download", location: "navbar_desktop" })}
+        <Link
+          href="/#download"
+          onClick={() => trackEvent("jump_link_click", { target: "/#download", location: "navbar_desktop" })}
           className="hidden md:inline-flex ml-4 items-center gap-1 bg-accent text-accent-foreground text-sm font-semibold rounded-full px-4 py-1.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Icon name="download" className="w-3.5 h-3.5" />
           Download
-        </a>
+        </Link>
 
         {/* Mobile hamburger */}
         <button
@@ -108,7 +122,7 @@ export function NavBar() {
         ref={menuRef}
         aria-hidden={!open}
         className={`md:hidden border-t border-border bg-background/95 backdrop-blur-md overflow-hidden transition-all duration-200 ${
-          open ? "max-h-64 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+          open ? "max-h-72 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >
         <nav className="flex flex-col px-4 py-3 gap-1" aria-label="Mobile navigation">
@@ -121,7 +135,7 @@ export function NavBar() {
                 trackEvent("jump_link_click", { target: link.href, location: "navbar_mobile" });
               }}
               className={`py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-2 ${
-                activeSection === link.href.slice(1)
+                activeSection === link.hash
                   ? "text-accent"
                   : "text-muted hover:text-foreground"
               }`}
@@ -129,17 +143,27 @@ export function NavBar() {
               {link.label}
             </a>
           ))}
-          <a
-            href="#download"
+          {ROUTE_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className="py-2 px-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded text-muted hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
+          <Link
+            href="/#download"
             onClick={() => {
               setOpen(false);
-              trackEvent("jump_link_click", { target: "#download", location: "navbar_mobile" });
+              trackEvent("jump_link_click", { target: "/#download", location: "navbar_mobile" });
             }}
             className="mt-2 inline-flex items-center gap-1.5 bg-accent text-accent-foreground text-sm font-semibold rounded-lg px-4 py-2 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Icon name="download" className="w-3.5 h-3.5" />
             Download
-          </a>
+          </Link>
         </nav>
       </div>
     </div>
