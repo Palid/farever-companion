@@ -1,14 +1,8 @@
 // Schema registry — single source of truth for all published encounter-log JSON schema versions.
-// To add v2 later, import its JSON and prepend one entry to SCHEMA_VERSIONS (newest first).
-//
-// Example v2 addition:
-//   import v2Schema from "@/public/logs-schema/v2.json";
-//   { id: "v2", label: "v2", productName: "Encounter Log", title: v2Schema.title,
-//     description: v2Schema.description, releaseDate: "2026-XX-XX",
-//     url: "/logs-schema/v2.json", schemaId: "https://farevercompanion.com/logs-schema/v2.json",
-//     schema: v2Schema, isLatest: true },
-//   ...and flip v1's isLatest to false.
+// To add a new version, import its JSON and prepend one entry to SCHEMA_VERSIONS (newest first),
+// then flip the previous entry's isLatest to false. Versions are immutable once published.
 
+import v2Schema from "@/public/logs-schema/v2.json";
 import v1Schema from "@/public/logs-schema/v1.json";
 
 export interface SchemaVersion {
@@ -38,6 +32,19 @@ export interface SchemaVersion {
 // Ordered NEWEST FIRST so versions[0] is always the latest.
 export const SCHEMA_VERSIONS: SchemaVersion[] = [
   {
+    id: "v2",
+    label: "v2",
+    productName: "Encounter Log",
+    title: v2Schema.title,
+    description:
+      "The canonical on-disk artifact for one closed encounter. Adds a status-effect timeline (applied/refreshed/expired) plus an encounter-open status snapshot and game-clock server timestamps (combat start, per-event, status start) on top of the v1 participants, combat events, and salvage metadata.",
+    releaseDate: "2026-06-27",
+    url: "/logs-schema/v2.json",
+    schemaId: "https://farevercompanion.com/logs-schema/v2.json",
+    schema: v2Schema,
+    isLatest: true,
+  },
+  {
     id: "v1",
     label: "v1",
     productName: "Encounter Log",
@@ -48,7 +55,7 @@ export const SCHEMA_VERSIONS: SchemaVersion[] = [
     url: "/logs-schema/v1.json",
     schemaId: "https://farevercompanion.com/logs-schema/v1.json",
     schema: v1Schema,
-    isLatest: true,
+    isLatest: false,
   },
 ];
 
