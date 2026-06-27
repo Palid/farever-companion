@@ -1,0 +1,941 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EncounterLogV2",
+  "description": "The canonical on-disk artifact for one closed encounter. Written atomically\nto `<logs_dir>/<started_at_unix>-<log_id>.json`.\n\nThe format version is not encoded in this type's name — it lives in the\n`schema_version` field and the `$schema` URL, both keyed off\n[`SCHEMA_VERSION`]. The published schema's `title` is likewise stamped from\nthat constant by [`encounter_log_schema`], so it never drifts from the\nversion.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "description": "Reference to the published JSON Schema this log conforms to — the\nversion-keyed URL from [`schema_url`]. Lets a consumer or editor locate\nand validate the document directly. Serialised first, as `$schema`.\n`#[serde(default)]` keeps pre-`$schema` logs deserialisable (the current\nURL is filled in on read), so this stays an additive change that needs\nno `schema_version` bump.",
+      "type": "string",
+      "default": "https://farevercompanion.com/logs-schema/v2.json"
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "log_id": {
+      "$ref": "#/$defs/LogId"
+    },
+    "encounter_id": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "started_at_unix": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "ended_at_unix": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "started_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "ended_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "duration_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "combat_start_server_ms": {
+      "description": "Game-clock timestamp (ms) at which combat started for this encounter\n(`ent.Hero.combatStartTime` × 1000, on the `serverNow` base). The\nauthoritative, party-shareable fight-start anchor — unlike the\nwall-clock `started_ms`/`started_at_unix`, this is the game clock the\nper-event `server_ms` is measured against, so `server_ms −\ncombat_start_server_ms` is the in-game time since the fight opened.\n`None` when `combatStartTime` couldn't be read. New in schema v2.",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0
+    },
+    "hero_uid": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "hero_database_id": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "int64"
+    },
+    "location": {
+      "description": "Where the encounter happened (instance/dungeon vs open world, plus a\nstable location id). Sampled once at `EncounterStart`. Omitted when\nthe probe couldn't resolve anything (booting / mid-transition); an\nadditive field that needed no `schema_version` bump — see\n[`EncounterLocation`].",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EncounterLocation"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "salvage_summary": {
+      "$ref": "#/$defs/SalvageSummary"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LogParticipant"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LogEvent"
+      }
+    },
+    "broken_events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/BrokenEvent"
+      }
+    },
+    "encounter_start_status": {
+      "description": "Active-status snapshot taken at encounter open (self + party). Empty\nwhen no statuses were active at the moment the encounter opened, or\nwhen the encounter was recovered from scratch (mid-session crash).\nNew in schema v2.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/StatusSnapshotEntry"
+      }
+    },
+    "status_events": {
+      "description": "Status timeline: one entry per status Applied / Refreshed / Expired\nobserved during the encounter. Empty when no status events occurred or\non recovery. In-memory only, like `participants`; not persisted in the\nscratch dir, so a mid-encounter crash recovers with an empty vec.\nNew in schema v2.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/StatusEvent"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "log_id",
+    "encounter_id",
+    "started_at_unix",
+    "ended_at_unix",
+    "started_ms",
+    "ended_ms",
+    "duration_ms",
+    "hero_uid",
+    "salvage_summary",
+    "participants",
+    "events",
+    "broken_events"
+  ],
+  "$defs": {
+    "LogId": {
+      "description": "Persistent unique identifier for one Encounter Log. UUIDv7 gives\ntime-ordered, globally-unique keys without platform dependencies.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "EncounterLocation": {
+      "description": "Where the encounter took place, sampled once at `EncounterStart` from the\nlive game (probe-core `current_location`). Every field is best-effort: a\nmemory read can come back empty during boot / a zone transition, so each\nis optional and the whole struct is omitted from the log when nothing\ncould be resolved. Adding fields here is additive — it needs no\n`schema_version` bump.\n\nThe instance/open-world distinction comes from the game's own\n`GameLayer.mainActivity` binding (set only for activities that own their\nlayer/scope), NOT from `Player.activityCtx` (which is an array that\nincludes non-instanced open-world overlays).",
+      "type": "object",
+      "properties": {
+        "in_instance": {
+          "description": "`true` when the local player was inside an instanced activity (its own\nlayer/scope — dungeon, arena, fight-stone, …) at encounter start;\n`Some(false)` in the open world. `None` only when the anchor walk\ncouldn't resolve (rare: still booting / mid zone-transition).",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "in_dungeon": {
+          "description": "`true` when the instanced activity is specifically a dungeon — the\ngame's `st.Activity::isDungeon`, i.e. an `st.activity.Dungeon` or its\n`st.activity.Boss` subclass. `Some(false)` in the open world or a\nnon-dungeon instance; `None` when unresolved.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "id": {
+          "description": "Stable CDB id of the current location — the validation-friendly key.\nIn an instance this is the activity-kind id (`mainActivity.kind`);\nin the open world it is the current zone id when resolvable. `None`\nwhen unresolved.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "Localized display name of the location when available (cosmetic; may\nbe absent on dev rows or before the text bank has loaded).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "activity_class": {
+          "description": "Runtime activity subtype — the leaf class name of `mainActivity`\n(e.g. `\"Dungeon\"`, `\"Boss\"`, `\"FightStone\"`). `None` in the open\nworld. A self-describing discriminator that lets the log distinguish\ninstance subtypes without a future schema change.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "SalvageSummary": {
+      "description": "Counters that let consumers triage a log's quality at a glance without\nstreaming the full event list.",
+      "type": "object",
+      "properties": {
+        "is_recovered": {
+          "description": "True when this log was reconstructed from scratch dir at startup\n(i.e. the previous session crashed or quit mid-encounter).",
+          "type": "boolean"
+        },
+        "partial_event_count": {
+          "description": "Events in `events` with `t: 1` (readable `time_ms`, some fields\nmissing or unreadable).",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "broken_event_count": {
+          "description": "Records in `broken_events` (unrecoverable `time_ms`).",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "partial_participant_count": {
+          "description": "Participants in `participants` with `t: 1`.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "is_recovered",
+        "partial_event_count",
+        "broken_event_count",
+        "partial_participant_count"
+      ]
+    },
+    "LogParticipant": {
+      "description": "Participant identity in the canonical log. The `t` field (0 or 1) discriminates between a fully-parsed participant and a partially-recovered one.",
+      "oneOf": [
+        {
+          "description": "A fully-resolved participant identity and loadout (t: 0).",
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "Discriminant: 0 = fully parsed participant.",
+              "const": 0
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "allOf": [
+            {
+              "properties": {
+                "t": true
+              }
+            },
+            {
+              "$ref": "#/$defs/ParticipantHeader"
+            }
+          ]
+        },
+        {
+          "description": "A participant record where some fields could not be read (t: 1). salvaged_fields are flattened at the top level.",
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "Discriminant: 1 = partially parsed participant.",
+              "const": 1
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "allOf": [
+            {
+              "properties": {
+                "t": true
+              }
+            },
+            {
+              "$ref": "#/$defs/PartialParticipantHeader"
+            }
+          ]
+        }
+      ]
+    },
+    "ParticipantHeader": {
+      "description": "Identity + loadout for a clean participant read.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "description": "Stable join key. The same `ParticipantId` the events carry as\n`source_uid` / `target_uid`; an unsigned `StableUnitId` hash, NOT\nthe game's raw `__uid` (which the log records separately as the\ntop-level `hero_uid`).",
+          "$ref": "#/$defs/ParticipantId"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_hero": {
+          "type": "boolean"
+        },
+        "level": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "class_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "weapons": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/Weapon"
+          }
+        },
+        "gear": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/GearPiece"
+          }
+        },
+        "talents": {
+          "description": "Picked talents for hero participants: internal skill-sheet CDB row id\n(e.g. `\"Warrior_Hemorrhage\"`) → rank (>= 1; absent key == unpicked,\nmatching the game's set-rank closure which removes the key at rank 0).\n`BTreeMap` keeps the on-disk key order deterministic.\n\nBest-effort: whether `HeroSpecialization.talents` is replicated for\nREMOTE party-member heroes is unverified (hxbit visibility groups may\nfilter it), so an unreadable/empty map serialises as absent rather\nthan demoting the participant to Partial. `None` for NPCs.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      },
+      "required": [
+        "uid",
+        "is_hero"
+      ]
+    },
+    "ParticipantId": {
+      "description": "Stable identity shared by a combat-log participant and every event\n(`source_uid` / `target_uid`) that references it. This is the\n`StableUnitId`-derived hash the bridge stamps onto each damage / heal /\nshield source and target — an OPAQUE 64-bit identifier (an FNV-1a hash\nover `(combat_id, spawn_tick, name)`, so the full 64-bit range is in\nplay and the top bit is frequently set), which is why it is carried\nUNSIGNED. A participant's `uid` and an event's `source_uid` /\n`target_uid` are the *same* `ParticipantId` and join by equality.\n\n`#[serde(transparent)]` keeps the on-disk shape a bare JSON number — its\nintroduction needed no `schema_version` bump.\n\n## Why a named newtype\n\nThis is deliberately NOT the game's raw `__uid` (a small, sequential,\ngenuinely-signed `i64` that the log carries separately as `hero_uid`\nand never uses as a participant/event join key). The two values live\nin different namespaces.\n\nThe combat-log once serialised the participant side of the join as a\nsigned `i64` while the event side stayed an unsigned `u64`: for any\nhash with the top bit set, the participant's `uid` came out negative\n(e.g. `-6558438490268822143`) while the same entity's `source_uid`\ncame out positive (`11888305583440729473`) — bit-identical, but two\ndifferent JSON numbers, so consumers could never join them. Modelling\nthe join key as one named unsigned type makes that representation\nmismatch a *compile error* rather than a silent data bug, and lets the\nrepresentation be changed in exactly one place if it ever must be.",
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "Weapon": {
+      "description": "One weapon slot in a participant's loadout.\n\nBeyond the original `slot` + `item_id` identity pair, the live\n`st.Equipment.content` walk (probe-core `hero_equipment`) fills in\nper-item instance state, and the CDB catalog (when loaded) adds the\nderived enrichment fields (`ilevel`, `stats`, `augment_stats`,\n`upgrade_special`, `affix_factor`). Every optional field is an\n`Option` with `skip_serializing_if` so pre-existing logs (and the\nlegacy `weaponInHand`/arsenal fallback path, which knows ids only)\nkeep their exact on-disk shape — additive, needing no `schema_version` bump.",
+      "type": "object",
+      "properties": {
+        "slot": {
+          "type": "string"
+        },
+        "item_id": {
+          "type": "string"
+        },
+        "level": {
+          "description": "Per-instance item level. `None` when the instance carries the\nsentinel 0, meaning \"use the CDB row's level\".",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "ilevel": {
+          "description": "DERIVED: effective iLevel (def iLevel + flawless bonus + stars ×\nupgrade bonus) — the input the stat generation runs at.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "upgrade_level": {
+          "description": "The in-game \"enhancement\" star count, 0..=5 (internal game field\nname: `upgradeLevel`). `Some(0)` is meaningful (un-enhanced) and\nis kept distinct from `None` (unreadable).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "flawless": {
+          "description": "Bit 0 of the instance's `flags` EnumFlagsData (Flawless quality).",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "rarity": {
+          "description": "Resolved rarity id: the per-instance override\n(`st.item.Weapon.rarity`) when present, else the CDB row's rarity\n(catalog-resolved). Without a loaded catalog this degrades to the\nraw override only.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "augments": {
+          "description": "Socketed augment item ids (internal game field name: `Gear.slots`).",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "in_hand": {
+          "description": "`Some(true)` on the one equipped weapon that unambiguously matches\nthe hero's `weaponInHand` decode, which is tag-gated on the\n`client.WeaponState` `InHand` constructor — holstered states\n(`PrimaryHolster` / `SecondaryHolster`) never match. `None`\neverywhere else (including when the match is ambiguous or the\nvenum payload is a weapon-kind row rather than the item row).",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "stats": {
+          "description": "DERIVED: base stat lines, replayed from the game's generation\nformulas. `Some([])` is meaningful — the item genuinely has no\nstats; `None` means the catalog wasn't loaded at sample time.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/StatLine"
+          }
+        },
+        "augment_stats": {
+          "description": "DERIVED: socket contributions, kept apart from `stats` so the two\nsources stay distinguishable.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/StatLine"
+          }
+        },
+        "upgrade_special": {
+          "description": "DERIVED: the enhancement special, when unlocked.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UpgradeSpecial"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "affix_factor": {
+          "description": "DERIVED: the slot's `affixFactor` when != 1.0 (Slot_Weapon2 =\n0.4). The stat lines stay tooltip-style (unscaled).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "required": [
+        "slot",
+        "item_id"
+      ]
+    },
+    "StatLine": {
+      "description": "One computed flat-attribute stat line (e.g. `Armor +286`). The values\nare DERIVED: the game stores no per-item stats, it regenerates them\nfrom `{item row, effective iLevel}`; the sampler replays that\ncomputation via `farever-item-stats` when the CDB catalog is loaded.",
+      "type": "object",
+      "properties": {
+        "attribute": {
+          "type": "string"
+        },
+        "value": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "attribute",
+        "value"
+      ]
+    },
+    "UpgradeSpecial": {
+      "description": "The enhancement-unlocked weapon special: granted at\n`upgrade_level >= GearUpgrades.SkillUnlockLevel` (3) when the skill\n`\"<itemType>_Upgrade\"` exists. `rank` is the 0-based resolved-rarity\nindex (Common 0 .. Legendary 4, no +1).",
+      "type": "object",
+      "properties": {
+        "skill": {
+          "type": "string"
+        },
+        "rank": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        }
+      },
+      "required": [
+        "skill",
+        "rank"
+      ]
+    },
+    "GearPiece": {
+      "description": "One gear piece in a participant's loadout. Same per-instance state and\nderived enrichment as [`Weapon`] minus the weapon-only `in_hand` flag\nand `upgrade_special`; see the field docs there. (`rarity` here is\npurely catalog-derived — gear has no instance override.)",
+      "type": "object",
+      "properties": {
+        "slot": {
+          "type": "string"
+        },
+        "item_id": {
+          "type": "string"
+        },
+        "level": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "ilevel": {
+          "description": "DERIVED: effective iLevel; see [`Weapon::ilevel`].",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int32"
+        },
+        "upgrade_level": {
+          "description": "In-game \"enhancement\" star count (internal name: `upgradeLevel`).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "flawless": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "rarity": {
+          "description": "DERIVED: the CDB row's rarity id (catalog-resolved).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "augments": {
+          "description": "Socketed augment item ids (internal name: `Gear.slots`).",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "stats": {
+          "description": "DERIVED: base stat lines; see [`Weapon::stats`].",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/StatLine"
+          }
+        },
+        "augment_stats": {
+          "description": "DERIVED: socket contributions; see [`Weapon::augment_stats`].",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/StatLine"
+          }
+        },
+        "affix_factor": {
+          "description": "DERIVED: the slot's `affixFactor` when != 1.0.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "required": [
+        "slot",
+        "item_id"
+      ]
+    },
+    "PartialParticipantHeader": {
+      "description": "A participant record where some fields couldn't be read.",
+      "type": "object",
+      "properties": {
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "missing_fields"
+      ]
+    },
+    "LogEvent": {
+      "description": "One chronological event in the canonical encounter log. The `t` field (0 or 1) discriminates between a fully-parsed event and a partially-recovered one.",
+      "oneOf": [
+        {
+          "description": "A fully-parsed combat event (t: 0). SidecarEvent fields are flattened at the top level alongside the discriminant; Option fields are omitted when None.",
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "Discriminant: 0 = fully parsed event.",
+              "const": 0
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "allOf": [
+            {
+              "properties": {
+                "t": true
+              }
+            },
+            {
+              "$ref": "#/$defs/SidecarEventSerde"
+            }
+          ]
+        },
+        {
+          "description": "A partially-parsed event where time_ms was recoverable but other fields may be missing (t: 1).",
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "Discriminant: 1 = partially parsed event.",
+              "const": 1
+            }
+          },
+          "required": [
+            "t"
+          ],
+          "allOf": [
+            {
+              "properties": {
+                "t": true
+              }
+            },
+            {
+              "$ref": "#/$defs/PartialEvent"
+            }
+          ]
+        }
+      ]
+    },
+    "SidecarEventSerde": {
+      "description": "Shadow of `SidecarEvent` with serde support, used for on-disk encoding.",
+      "type": "object",
+      "properties": {
+        "time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "server_ms": {
+          "description": "Game-clock timestamp (ms) of the event (`serverNow` × 1000), read once\nper pump tick. Distinct from `time_ms` (a wall-clock monotonic counter):\nthe game clock can pause / dilate, so this is the only timestamp on the\ngame/server clock and the one to use against `combat_start_server_ms`.\n`None` when `serverNow` couldn't be read that tick.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "source_uid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_uid": {
+          "$ref": "#/$defs/ParticipantId"
+        },
+        "target_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "skill": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "effect": {
+          "$ref": "#/$defs/SidecarEffectKindSerde"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "overheal": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "crit": {
+          "type": "boolean"
+        },
+        "kill": {
+          "type": "boolean"
+        },
+        "mitigated": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "time_ms",
+        "target_uid",
+        "effect",
+        "amount",
+        "crit",
+        "kill",
+        "mitigated"
+      ]
+    },
+    "SidecarEffectKindSerde": {
+      "type": "string",
+      "enum": [
+        "Damage",
+        "Heal",
+        "Shield",
+        "Dodge",
+        "Other"
+      ]
+    },
+    "PartialEvent": {
+      "description": "A timeline event with `time_ms` recoverable but some other fields missing.",
+      "type": "object",
+      "properties": {
+        "time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "parse_error": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "time_ms",
+        "missing_fields",
+        "parse_error"
+      ],
+      "additionalProperties": true
+    },
+    "BrokenEvent": {
+      "description": "A record whose `time_ms` is unrecoverable; cannot be placed in the\ntimeline. Lives in `broken_events`, not `events`.",
+      "type": "object",
+      "properties": {
+        "line_index": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "raw_line": {
+          "type": "string"
+        },
+        "parse_error": {
+          "type": "string"
+        },
+        "partial_fields": true
+      },
+      "required": [
+        "line_index",
+        "raw_line",
+        "parse_error"
+      ]
+    },
+    "StatusSnapshotEntry": {
+      "description": "One active status captured in the encounter-open status snapshot.",
+      "type": "object",
+      "properties": {
+        "target_uid": {
+          "description": "The unit the status sits on — the status *target*\n(joins ParticipantHeader::uid).",
+          "$ref": "#/$defs/ParticipantId"
+        },
+        "target_name": {
+          "description": "Display name of the target, when resolved. Joinable via `participants`\ntoo; carried inline to match the damage-event shape.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status_id": {
+          "description": "CDB status id (e.g. \"ShieldOfSpark\"); the Status.kind row id.",
+          "type": "string"
+        },
+        "source_uid": {
+          "description": "The unit that applied the status — the *source* (`Status.instigator`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_name": {
+          "description": "Display name of the source, when resolved.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stacks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "remaining_duration_ms": {
+          "description": "Time left until the status expires, in ms. The game model is\n`remaining = max(0, Status.duration − (serverNow − Status.startTime))`\non a game clock measured in seconds (× 1000 → ms), replicating\n`st.skill.BaseSkill::getDurationLeft`. The probe reads the layer-global\n`serverNow` (`obj.layer → _time → _time → serverNow`) once per snapshot;\nsee `farever-probe-core`'s status_tracker. `None` when an input\n(`duration`, `startTime`, or `serverNow`) couldn't be read.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "start_time_ms": {
+          "description": "The game-clock timestamp (ms) at which this status began\n(`Status.startTime` × 1000, on the `serverNow` base). Lets a consumer\nrecompute remaining against any later reference:\n`remaining = duration_ms − (ref_server_ms − start_time_ms)`. `None`\nwhen `startTime` couldn't be read.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "target_uid",
+        "status_id"
+      ]
+    },
+    "StatusEvent": {
+      "description": "One status timeline event (applied / refreshed / expired) during an encounter.",
+      "type": "object",
+      "properties": {
+        "time_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "kind": {
+          "$ref": "#/$defs/StatusEventKind"
+        },
+        "target_uid": {
+          "description": "The unit the status sits on — the status *target*\n(joins ParticipantHeader::uid).",
+          "$ref": "#/$defs/ParticipantId"
+        },
+        "target_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status_id": {
+          "type": "string"
+        },
+        "source_uid": {
+          "description": "The unit that applied the status — the *source* (`Status.instigator`).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParticipantId"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stacks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "duration_ms": {
+          "description": "The status's configured total lifetime at this event, in ms (game-clock\nseconds × 1000). Extendable in-game (`rpcExtendDuration`), so a\nRefreshed event can carry a larger value than its Applied. This is the\ntotal granted, NOT time-remaining (see `remaining_duration_ms`).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        },
+        "start_time_ms": {
+          "description": "The game-clock timestamp (ms) at which this status began\n(`Status.startTime` × 1000, on the `serverNow` base). Immutable for a\ngiven status — a Refreshed event extends `duration_ms`, not the start.\nCombined with a per-event `server_ms`, lets a consumer reconstruct the\nexact remaining at any point. `None` when `startTime` couldn't be read.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "time_ms",
+        "kind",
+        "target_uid",
+        "status_id"
+      ]
+    },
+    "StatusEventKind": {
+      "type": "string",
+      "enum": [
+        "Applied",
+        "Refreshed",
+        "Expired"
+      ]
+    }
+  }
+}
