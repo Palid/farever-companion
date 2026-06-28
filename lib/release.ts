@@ -18,14 +18,14 @@ export type Release = {
 };
 
 export const RELEASE_CONFIG: Release = {
-  latestVersion: "0.1.8",
-  tag: "v0.1.8",
-  fileName: "farever-companion-v0.1.8.zip",
-  sha256: "1b6c9212a035eca089f1c3f0e9af6d8b04a30ca47695018733c619b8e2282df4",
+  latestVersion: "0.2.0",
+  tag: "v0.2.0",
+  fileName: "farever-companion-v0.2.0.zip",
+  sha256: "ddb6a6b078acd9293c090ce22ff417e3a274c91c2be3622f645099faa3e48b1e",
   dllFileName: "dinput8.dll",
-  dllSha256: "ea39184b2f3842d2f057d806417794ed36094b47407b02b70bcabbcc4c4c212b",
-  releasedAt: "2026-06-13",
-  fileSizeBytes: 3233540,
+  dllSha256: "8333e203d5297e1d19f881c536e9e112a6be88fcfbe9b8c3676211517725f333",
+  releasedAt: "2026-06-28",
+  fileSizeBytes: 3092109,
 };
 
 export function releaseDownloadUrl(release: Release = RELEASE_CONFIG): string {
